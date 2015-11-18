@@ -77,6 +77,7 @@ type JsonApiReceiverConfig struct {
 
 	Path    string `json:"path"`
 	Timeout int    `json:"timeout"`
+	BindURN string `json:"bind_urn"`
 }
 
 func (p *JsonApiReceiverConfig) initial() {

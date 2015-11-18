@@ -280,6 +280,8 @@ func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit
 		deliveryURN := ""
 		if urn, exist := p.conf.ApiURN[api]; exist {
 			deliveryURN = urn
+		} else {
+			deliveryURN = p.conf.BindURN
 		}
 
 		deliveryLabels := spirit.Labels{}
