@@ -1,7 +1,13 @@
 package http_json_api
 
 import (
+	"github.com/gogap/errors"
 	"github.com/gogap/spirit"
+	"github.com/rs/xid"
+)
+
+var (
+	ErrHttpResponseGenericError = errors.TN(HttpJsonApiErrNamespace, 100, "{{.err}}")
 )
 
 type HttpJsonApiPayload struct {
@@ -9,7 +15,17 @@ type HttpJsonApiPayload struct {
 	data     interface{}
 	err      error
 	metadata spirit.Metadata
-	context  spirit.Contexts
+	contexts spirit.Contexts
+}
+
+func NewHttpJsonApiPayload() (payload *HttpJsonApiPayload) {
+	payload = &HttpJsonApiPayload{
+		id:       xid.New().String(),
+		metadata: make(spirit.Metadata),
+		contexts: make(spirit.Contexts),
+	}
+
+	return
 }
 
 func (p *HttpJsonApiPayload) Id() (id string) {
@@ -30,34 +46,48 @@ func (p *HttpJsonApiPayload) GetError() (err error) {
 }
 
 func (p *HttpJsonApiPayload) SetError(err error) {
-	p.err = err
+	switch e := err.(type) {
+	case errors.ErrCode:
+		{
+			p.err = e
+		}
+	default:
+		{
+			p.err = ErrHttpResponseGenericError.New(errors.Params{"err": err})
+		}
+	}
 	return
 }
 
 func (p *HttpJsonApiPayload) AppendMetadata(name string, values ...interface{}) (err error) {
+	p.metadata[name] = append(p.metadata[name], values...)
 	return
 }
 
 func (p *HttpJsonApiPayload) GetMetadata(name string) (values []interface{}, exist bool) {
+	values, exist = p.metadata[name]
 	return
 }
 
 func (p *HttpJsonApiPayload) Metadata() (metadata spirit.Metadata) {
-	return
+	return p.metadata
 }
 
 func (p *HttpJsonApiPayload) GetContext(name string) (v interface{}, exist bool) {
+	v, exist = p.contexts[name]
 	return
 }
 
 func (p *HttpJsonApiPayload) SetContext(name string, v interface{}) (err error) {
+	p.contexts[name] = v
 	return
 }
 
 func (p *HttpJsonApiPayload) Contexts() (contexts spirit.Contexts) {
-	return
+	return p.contexts
 }
 
 func (p *HttpJsonApiPayload) DeleteContext(name string) (err error) {
+	delete(p.contexts, name)
 	return
 }
