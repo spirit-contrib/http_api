@@ -7,8 +7,25 @@ import (
 )
 
 var (
-	ErrHttpResponseGenericError = errors.TN(HttpJsonApiErrNamespace, 100, "{{.err}}")
+	ErrHttpResponseGenericError = errors.TN(HttpJsonApiErrNamespace, 100, "")
 )
+
+type ErrorCode struct {
+	Namespace  string                 `json:"namespace"`
+	Code       uint64                 `json:"code"`
+	Id         string                 `json:"id"`
+	Message    string                 `json:"message"`
+	StackTrace string                 `json:"stack_trace"`
+	Context    map[string]interface{} `json:"context"`
+}
+
+type JsonPayload struct {
+	Id       string          `json:"id"`
+	Data     interface{}     `json:"data"`
+	Metadata spirit.Metadata `json:"metadata"`
+	Error    *ErrorCode      `json:"error"`
+	Context  spirit.Contexts `json:"context"`
+}
 
 type HttpJsonApiPayload struct {
 	id       string
@@ -53,7 +70,7 @@ func (p *HttpJsonApiPayload) SetError(err error) {
 		}
 	default:
 		{
-			p.err = ErrHttpResponseGenericError.New(errors.Params{"err": err})
+			p.err = ErrHttpResponseGenericError.New().Append(err)
 		}
 	}
 	return

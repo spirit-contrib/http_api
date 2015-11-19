@@ -106,7 +106,7 @@ func (p *JsonApiReceiver) requestHandler(
 				}
 			}
 		default:
-			e := ErrApiGenericError.New(errors.Params{"err": err})
+			e := ErrApiGenericError.New().Append(err)
 			apiResponse = APIResponse{
 				Code:           e.Code(),
 				ErrorId:        e.Id(),
@@ -204,7 +204,9 @@ func (p *JsonApiReceiver) requestHandler(
 		// normal response: {"code": 0, "message": "", "result": null}
 		// error response: {"code": 212, "error_namespace": "xxxx", "message": "something wrong", "result": null}
 
-		isMultiCall := req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "1"
+		isMultiCall := req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "1" ||
+			req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "on"
+
 		if renderedData, e := p.responseRenderer.Render(isMultiCall, apiResponse); e != nil {
 			err := ErrRenderApiDataFailed.New(errors.Params{"err": e})
 			resp := APIResponse{
@@ -231,7 +233,16 @@ func (p *JsonApiReceiver) requestHandler(
 }
 
 func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit.Delivery, apiIds map[string]string, err error) {
-	isMultiCall := req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "1"
+	isMultiCall := req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "1" ||
+		req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "on"
+
+	isForwarded := req.Header.Get(HeaderForwardedPayload) == "1" ||
+		req.Header.Get(HeaderForwardedPayload) == "on"
+
+	if isMultiCall == true && isForwarded == true {
+		err = ErrNotSupportMultiCallForward.New()
+		return
+	}
 
 	idMapping := make(map[string]string)
 
@@ -240,7 +251,7 @@ func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit
 		return
 	}
 
-	var apiDatas map[string]map[string]interface{} = make(map[string]map[string]interface{})
+	var apiDatas map[string]interface{} = make(map[string]interface{})
 
 	if isMultiCall {
 		if err = json.Unmarshal(body, &apiDatas); err != nil {
@@ -262,12 +273,20 @@ func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit
 			return
 		}
 
-		var apiData map[string]interface{}
-		if json.Unmarshal(body, &apiData); err != nil {
-			return
+		if isForwarded {
+			apiData := JsonPayload{}
+			if json.Unmarshal(body, &apiData); err != nil {
+				return
+			}
+			apiDatas[apiName] = apiData
+		} else {
+			var apiData map[string]interface{}
+			if json.Unmarshal(body, &apiData); err != nil {
+				return
+			}
+			apiDatas[apiName] = apiData
 		}
 
-		apiDatas[apiName] = apiData
 	}
 
 	var tmpDeliveries []spirit.Delivery
@@ -275,7 +294,28 @@ func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit
 
 		payload := NewHttpJsonApiPayload()
 
-		payload.SetData(apiData)
+		if isForwarded {
+			if jsonPayload, ok := apiData.(JsonPayload); ok {
+				payload.id = jsonPayload.Id
+				payload.data = jsonPayload.Data
+				payload.metadata = jsonPayload.Metadata
+				payload.contexts = jsonPayload.Context
+
+				if jsonPayload.Error != nil {
+					errCode := errors.NewErrorCode(
+						jsonPayload.Error.Id,
+						jsonPayload.Error.Code,
+						jsonPayload.Error.Namespace,
+						jsonPayload.Error.Message,
+						jsonPayload.Error.StackTrace,
+						jsonPayload.Error.Context)
+
+					payload.SetError(errCode)
+				}
+			}
+		} else {
+			payload.SetData(apiData)
+		}
 
 		deliveryURN := ""
 		if urn, exist := p.conf.ApiURN[api]; exist {
@@ -322,7 +362,7 @@ func (p *JsonApiReceiver) deliveryToApiResponse(delivery spirit.Delivery) (resp 
 				Result:         nil,
 			}
 		} else {
-			errCode := ErrApiGenericError.New(errors.Params{"err": err})
+			errCode := ErrApiGenericError.New().Append(err)
 			return APIResponse{
 				Code:           errCode.Code(),
 				ErrorId:        errCode.Id(),

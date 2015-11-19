@@ -12,10 +12,15 @@ var (
 	DefaultApiMultiCallHeader = "X-Api-Multi-Call"
 )
 
+const (
+	HeaderForwardedPayload = "X-Forwarded-Payload"
+)
+
 var internalAllowHeaders = []string{
 	"Origin",
 	"Content-Type",
 	"Authorization",
 	"Accept",
 	"X-Requested-With",
+	"X-Forwarded-Payload",
 }

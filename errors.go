@@ -18,6 +18,7 @@ var (
 	ErrTmplNotExit           = errors.TN(HttpJsonApiErrNamespace, 402, "template of {{.tmplName}} not exist")
 	ErrRequestTimeout        = errors.TN(HttpJsonApiErrNamespace, 408, "request timeout")
 
-	ErrApiGenericError     = errors.TN(HttpJsonApiErrNamespace, 500, "{{.err}}")
-	ErrRenderApiDataFailed = errors.TN(HttpJsonApiErrNamespace, 501, "render api data failed")
+	ErrApiGenericError            = errors.TN(HttpJsonApiErrNamespace, 500, "")
+	ErrNotSupportMultiCallForward = errors.TN(HttpJsonApiErrNamespace, 501, "not support multi call forward")
+	ErrRenderApiDataFailed        = errors.TN(HttpJsonApiErrNamespace, 502, "render api data failed")
 )
