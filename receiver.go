@@ -71,32 +71,34 @@ func NewJsonApiReceiver(config spirit.Config) (receiver spirit.Receiver, err err
 			return "pong"
 		})
 
-		r.Get(conf.XDomain.HtmlPath, func(r *gohttp.Request) string {
-			refer := r.Referer()
-			if refer == "" {
-				refer = r.Header.Get("Origin")
-			}
-
-			html := jsonApiReceiver.htmlProxy
-
-			if conf.XDomain.Masters != nil && refer != "" {
-				protocol, domain := parseRefer(refer)
-				origin := protocol + "://" + domain
-
-				if path, exist := conf.XDomain.Masters[protocol+"://"+domain]; exist {
-					master := map[string]string{origin: path}
-
-					jsonData, _ := json.MarshalIndent(master, "", "  ")
-
-					html = strings.Replace(html, "{{#Masters#}}", string(jsonData), 1)
-					return html
+		if conf.XDomain.HtmlPath != "" {
+			r.Get(conf.XDomain.HtmlPath, func(r *gohttp.Request) string {
+				refer := r.Referer()
+				if refer == "" {
+					refer = r.Header.Get("Origin")
 				}
-			}
 
-			html = strings.Replace(html, "{{#Masters#}}", "{}", 1)
+				html := jsonApiReceiver.htmlProxy
 
-			return html
-		})
+				if conf.XDomain.Masters != nil && refer != "" {
+					protocol, domain := parseRefer(refer)
+					origin := protocol + "://" + domain
+
+					if path, exist := conf.XDomain.Masters[protocol+"://"+domain]; exist {
+						master := map[string]string{origin: path}
+
+						jsonData, _ := json.MarshalIndent(master, "", "  ")
+
+						html = strings.Replace(html, "{{#Masters#}}", string(jsonData), 1)
+						return html
+					}
+				}
+
+				html = strings.Replace(html, "{{#Masters#}}", "{}", 1)
+
+				return html
+			})
+		}
 
 		if conf.XDomain.LibPath != "" {
 			r.Get(conf.XDomain.LibPath, func() string {
