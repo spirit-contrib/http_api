@@ -242,7 +242,8 @@ func (p *JsonApiReceiver) requestHandler(
 		// error response: {"code": 212, "error_namespace": "xxxx", "message": "something wrong", "result": null}
 
 		isMultiCall := req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "1" ||
-			req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "on"
+			req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "on" ||
+			req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "true"
 
 		if renderedData, e := p.responseRenderer.Render(isMultiCall, apiResponse); e != nil {
 			err := ErrRenderApiDataFailed.New(errors.Params{"err": e})
@@ -271,10 +272,12 @@ func (p *JsonApiReceiver) requestHandler(
 
 func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit.Delivery, apiIds map[string]string, err error) {
 	isMultiCall := req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "1" ||
-		req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "on"
+		req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "on" ||
+		req.Header.Get(p.conf.HeaderDefines.MultiCallHeader) == "true"
 
 	isForwarded := req.Header.Get(HeaderForwardedPayload) == "1" ||
-		req.Header.Get(HeaderForwardedPayload) == "on"
+		req.Header.Get(HeaderForwardedPayload) == "on" ||
+		req.Header.Get(HeaderForwardedPayload) == "true"
 
 	if isMultiCall == true && isForwarded == true {
 		err = ErrNotSupportMultiCallForward.New()
