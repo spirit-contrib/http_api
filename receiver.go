@@ -315,6 +315,33 @@ func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit
 			}
 		} else {
 			payload.SetData(apiData)
+
+			headerContexts := map[string]interface{}{}
+			cookiesContexts := map[string]interface{}{}
+
+			for _, key := range p.conf.ToContext.Headers {
+				if req.Header.Get(key) != "" {
+					headerContexts[key] = req.Header.Get(key)
+				}
+			}
+
+			for _, key := range p.conf.ToContext.Cookies {
+				if cookie, e := req.Cookie(key); e == nil {
+					cookiesContexts[cookie.Name] = cookie
+				}
+			}
+
+			if len(cookiesContexts) > 0 {
+				payload.SetContext(CtxHttpCookies, cookiesContexts)
+			}
+
+			if len(headerContexts) > 0 {
+				payload.SetContext(CtxHttpHeaders, headerContexts)
+			}
+
+			if len(p.conf.ToContext.Customs) > 0 {
+				payload.SetContext(CtxHttpCustom, p.conf.ToContext.Customs)
+			}
 		}
 
 		deliveryURN := ""

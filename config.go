@@ -61,6 +61,12 @@ type HeaderDefines struct {
 	TimeoutHeader   string `json:"timeout"`
 }
 
+type ToContext struct {
+	Cookies []string               `json:"cookies"`
+	Headers []string               `json:"headers"`
+	Customs map[string]interface{} `json:"customs"`
+}
+
 type JsonApiReceiverConfig struct {
 	Http http.HTTPReceiverConfig `json:"http"`
 
@@ -78,6 +84,8 @@ type JsonApiReceiverConfig struct {
 	Path    string `json:"path"`
 	Timeout int    `json:"timeout"`
 	BindURN string `json:"bind_urn"`
+
+	ToContext ToContext `json:"to_context"`
 }
 
 func (p *JsonApiReceiverConfig) initial() {

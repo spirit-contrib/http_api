@@ -14,6 +14,10 @@ var (
 
 const (
 	HeaderForwardedPayload = "X-Forwarded-Payload"
+
+	CtxHttpCookies = "CTX_HTTP_COOKIES"
+	CtxHttpHeaders = "CTX_HTTP_HEADERS"
+	CtxHttpCustom  = "CTX_HTTP_CUSTOM"
 )
 
 var internalAllowHeaders = []string{
