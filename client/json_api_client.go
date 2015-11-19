@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	DefaultClientTimeout = time.Second * 5
+	DefaultClientTimeout = time.Second * 30
 )
 
 const (
