@@ -61,6 +61,13 @@ type HeaderDefines struct {
 	TimeoutHeader   string `json:"timeout"`
 }
 
+type XDomainConfig struct {
+	HtmlPath string            `json:"html_path"`
+	LibPath  string            `json:"lib_path"`
+	LibUrl   string            `json:"lib_url"`
+	Masters  map[string]string `json:"masters"`
+}
+
 type ToContext struct {
 	Cookies []string               `json:"cookies"`
 	Headers []string               `json:"headers"`
@@ -86,6 +93,8 @@ type JsonApiReceiverConfig struct {
 	BindURN string `json:"bind_urn"`
 
 	ToContext ToContext `json:"to_context"`
+
+	XDomain XDomainConfig `json:"xdomain"`
 }
 
 func (p *JsonApiReceiverConfig) initial() {

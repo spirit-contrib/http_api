@@ -25,6 +25,8 @@ type JsonApiReceiver struct {
 	conf JsonApiReceiverConfig
 
 	responseRenderer *APIResponseRenderer
+
+	htmlProxy string
 }
 
 var (
@@ -62,10 +64,45 @@ func NewJsonApiReceiver(config spirit.Config) (receiver spirit.Receiver, err err
 		r.Options("/:apiName", jsonApiReceiver.optionHandle)
 	})
 
+	jsonApiReceiver.htmlProxy = strings.Replace(proxyHtml, "{{#XDomainLib#}}", conf.XDomain.LibUrl, 1)
+
 	jsonApiReceiver.Group("/", func(r martini.Router) {
 		r.Get("ping", func() string {
 			return "pong"
 		})
+
+		r.Get(conf.XDomain.HtmlPath, func(r *gohttp.Request) string {
+			refer := r.Referer()
+			if refer == "" {
+				refer = r.Header.Get("Origin")
+			}
+
+			html := jsonApiReceiver.htmlProxy
+
+			if conf.XDomain.Masters != nil && refer != "" {
+				protocol, domain := parseRefer(refer)
+				origin := protocol + "://" + domain
+
+				if path, exist := conf.XDomain.Masters[protocol+"://"+domain]; exist {
+					master := map[string]string{origin: path}
+
+					jsonData, _ := json.MarshalIndent(master, "", "  ")
+
+					html = strings.Replace(html, "{{#Masters#}}", string(jsonData), 1)
+					return html
+				}
+			}
+
+			html = strings.Replace(html, "{{#Masters#}}", "{}", 1)
+
+			return html
+		})
+
+		if conf.XDomain.LibPath != "" {
+			r.Get(conf.XDomain.LibPath, func() string {
+				return xdomainLib
+			})
+		}
 	})
 
 	receiver = jsonApiReceiver
