@@ -17,6 +17,10 @@ var (
 	DefaultClientTimeout = time.Second * 5
 )
 
+const (
+	HeaderForwardedPayload = "X-Forwarded-Payload"
+)
+
 type HTTPAPIClient struct {
 	apiHeaderName string
 	url           string
@@ -109,6 +113,7 @@ func (p *HTTPAPIClient) Call(apiName string, payload spirit.Payload, v interface
 	}
 
 	req.Header.Add(p.apiHeaderName, apiName)
+	req.Header.Add(HeaderForwardedPayload, "on")
 
 	var resp *http.Response
 	if resp, err = p.client.Do(req); err != nil {
