@@ -9,6 +9,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/rs/xid"
 )
 
 //some function copied from https://github.com/spf13/hugo
@@ -37,6 +39,7 @@ func init() {
 		"add":          func(a, b interface{}) (interface{}, error) { return doArithmetic(a, b, '+') },
 		"sub":          func(a, b interface{}) (interface{}, error) { return doArithmetic(a, b, '-') },
 		"div":          func(a, b interface{}) (interface{}, error) { return doArithmetic(a, b, '/') },
+		"xid":          xid.New().String(),
 	}
 }
 
