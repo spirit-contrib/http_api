@@ -4,6 +4,7 @@ import (
 	"github.com/gogap/errors"
 	"github.com/gogap/spirit"
 	"github.com/rs/xid"
+	"strings"
 )
 
 var (
@@ -77,12 +78,12 @@ func (p *HttpJsonApiPayload) SetError(err error) {
 }
 
 func (p *HttpJsonApiPayload) AppendMetadata(name string, values ...interface{}) (err error) {
-	p.metadata[name] = append(p.metadata[name], values...)
+	p.metadata[strings.ToUpper(name)] = append(p.metadata[strings.ToUpper(name)], values...)
 	return
 }
 
 func (p *HttpJsonApiPayload) GetMetadata(name string) (values []interface{}, exist bool) {
-	values, exist = p.metadata[name]
+	values, exist = p.metadata[strings.ToUpper(name)]
 	return
 }
 
@@ -91,12 +92,12 @@ func (p *HttpJsonApiPayload) Metadata() (metadata spirit.Metadata) {
 }
 
 func (p *HttpJsonApiPayload) GetContext(name string) (v interface{}, exist bool) {
-	v, exist = p.contexts[name]
+	v, exist = p.contexts[strings.ToUpper(name)]
 	return
 }
 
 func (p *HttpJsonApiPayload) SetContext(name string, v interface{}) (err error) {
-	p.contexts[name] = v
+	p.contexts[strings.ToUpper(name)] = v
 	return
 }
 
@@ -105,6 +106,6 @@ func (p *HttpJsonApiPayload) Contexts() (contexts spirit.Contexts) {
 }
 
 func (p *HttpJsonApiPayload) DeleteContext(name string) (err error) {
-	delete(p.contexts, name)
+	delete(p.contexts, strings.ToUpper(name))
 	return
 }
