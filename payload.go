@@ -1,6 +1,7 @@
 package http_json_api
 
 import (
+	"encoding/json"
 	"github.com/gogap/errors"
 	"github.com/gogap/spirit"
 	"github.com/rs/xid"
@@ -52,6 +53,50 @@ func (p *HttpJsonApiPayload) Id() (id string) {
 
 func (p *HttpJsonApiPayload) GetData() (data interface{}, err error) {
 	return p.data, nil
+}
+
+func (p *HttpJsonApiPayload) DataToObject(v interface{}) (err error) {
+	switch d := p.data.(type) {
+	case string:
+		{
+
+			if err = json.Unmarshal([]byte(d), v); err != nil {
+				var b []byte
+				if b, err = json.Marshal(d); err != nil {
+					return
+				}
+
+				if err = json.Unmarshal(b, v); err != nil {
+					return
+				}
+			}
+		}
+	case []byte:
+		{
+			if err = json.Unmarshal(d, v); err != nil {
+				var b []byte
+				if b, err = json.Marshal(string(d)); err != nil {
+					return
+				}
+
+				if err = json.Unmarshal(b, v); err != nil {
+					return
+				}
+			}
+		}
+	default:
+		{
+			var b []byte
+			if b, err = json.Marshal(p.data); err != nil {
+				return
+			}
+
+			if err = json.Unmarshal(b, v); err != nil {
+				return
+			}
+		}
+	}
+	return
 }
 
 func (p *HttpJsonApiPayload) SetData(data interface{}) (err error) {

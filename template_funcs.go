@@ -39,7 +39,7 @@ func init() {
 		"add":          func(a, b interface{}) (interface{}, error) { return doArithmetic(a, b, '+') },
 		"sub":          func(a, b interface{}) (interface{}, error) { return doArithmetic(a, b, '-') },
 		"div":          func(a, b interface{}) (interface{}, error) { return doArithmetic(a, b, '/') },
-		"xid":          xid.New().String(),
+		"xid":          xid.New().String,
 	}
 }
 
