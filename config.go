@@ -79,8 +79,10 @@ type JsonApiReceiverConfig struct {
 
 	HeaderDefines HeaderDefines `json:"header_defines"`
 
-	ApiURN    map[string]string        `json:"api_urn"`
-	ApiLabels map[string]spirit.Labels `json:"api_labels"`
+	ApiURN        map[string]string          `json:"api_urn"`
+	ApiLabels     map[string]spirit.Labels   `json:"api_labels"`
+	ApiMetadata   map[string]spirit.Metadata `json:"api_metadata"`
+	DefaultLabels spirit.Labels              `json:"default_labels"`
 
 	Renderer RendererConfig `json:"renderer"`
 

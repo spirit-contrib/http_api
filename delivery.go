@@ -11,6 +11,7 @@ type HttpJsonApiDelivery struct {
 	urn       string
 	sessionId string
 	payload   *HttpJsonApiPayload
+	metadata  spirit.Metadata
 	labels    spirit.Labels
 	timestamp time.Time
 }
@@ -41,4 +42,31 @@ func (p *HttpJsonApiDelivery) Validate() (err error) {
 
 func (p *HttpJsonApiDelivery) Timestamp() time.Time {
 	return p.timestamp
+}
+
+func (p *HttpJsonApiDelivery) GetMetadata(name string) (v interface{}, exist bool) {
+	if p.metadata == nil {
+		return
+	}
+
+	v, exist = p.metadata[name]
+
+	return
+}
+
+func (p *HttpJsonApiDelivery) SetMetadata(name string, v interface{}) (err error) {
+	p.metadata[name] = v
+	return
+}
+
+func (p *HttpJsonApiDelivery) Metadata() (metadata spirit.Metadata) {
+	metadata = p.metadata
+	return
+}
+
+func (p *HttpJsonApiDelivery) DeleteContext(name string) (err error) {
+	if p.metadata != nil {
+		delete(p.metadata, name)
+	}
+	return
 }

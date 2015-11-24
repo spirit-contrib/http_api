@@ -12,36 +12,24 @@ var (
 	ErrHttpResponseGenericError = errors.TN(HttpJsonApiErrNamespace, 100, "")
 )
 
-type ErrorCode struct {
-	Namespace  string                 `json:"namespace"`
-	Code       uint64                 `json:"code"`
-	Id         string                 `json:"id"`
-	Message    string                 `json:"message"`
-	StackTrace string                 `json:"stack_trace"`
-	Context    map[string]interface{} `json:"context"`
-}
-
 type JsonPayload struct {
-	Id       string          `json:"id"`
-	Data     interface{}     `json:"data"`
-	Metadata spirit.Metadata `json:"metadata"`
-	Error    *ErrorCode      `json:"error"`
-	Context  spirit.Contexts `json:"context"`
+	Id      string          `json:"id"`
+	Data    interface{}     `json:"data"`
+	Errors  []*spirit.Error `json:"errors"`
+	Context spirit.Context  `json:"context"`
 }
 
 type HttpJsonApiPayload struct {
-	id       string
-	data     interface{}
-	err      error
-	metadata spirit.Metadata
-	contexts spirit.Contexts
+	id      string
+	data    interface{}
+	errs    []*spirit.Error
+	context spirit.Context
 }
 
 func NewHttpJsonApiPayload() (payload *HttpJsonApiPayload) {
 	payload = &HttpJsonApiPayload{
-		id:       xid.New().String(),
-		metadata: make(spirit.Metadata),
-		contexts: make(spirit.Contexts),
+		id:      xid.New().String(),
+		context: make(spirit.Context),
 	}
 
 	return
@@ -104,53 +92,41 @@ func (p *HttpJsonApiPayload) SetData(data interface{}) (err error) {
 	return
 }
 
-func (p *HttpJsonApiPayload) GetError() (err error) {
-	return p.err
+func (p *HttpJsonApiPayload) Errors() (err []*spirit.Error) {
+	return p.errs
 }
 
-func (p *HttpJsonApiPayload) SetError(err error) {
-	switch e := err.(type) {
-	case errors.ErrCode:
-		{
-			p.err = e
-		}
-	default:
-		{
-			p.err = ErrHttpResponseGenericError.New().Append(err)
-		}
+func (p *HttpJsonApiPayload) AppendError(err ...*spirit.Error) {
+	p.errs = append(p.errs, err...)
+}
+
+func (p *HttpJsonApiPayload) LastError() (err *spirit.Error) {
+	if len(p.errs) > 0 {
+		err = p.errs[len(p.errs)-1]
 	}
 	return
 }
 
-func (p *HttpJsonApiPayload) AppendMetadata(name string, values ...interface{}) (err error) {
-	p.metadata[strings.ToUpper(name)] = append(p.metadata[strings.ToUpper(name)], values...)
+func (p *HttpJsonApiPayload) ClearErrors() {
+	p.errs = nil
 	return
-}
-
-func (p *HttpJsonApiPayload) GetMetadata(name string) (values []interface{}, exist bool) {
-	values, exist = p.metadata[strings.ToUpper(name)]
-	return
-}
-
-func (p *HttpJsonApiPayload) Metadata() (metadata spirit.Metadata) {
-	return p.metadata
 }
 
 func (p *HttpJsonApiPayload) GetContext(name string) (v interface{}, exist bool) {
-	v, exist = p.contexts[strings.ToUpper(name)]
+	v, exist = p.context[strings.ToUpper(name)]
 	return
 }
 
 func (p *HttpJsonApiPayload) SetContext(name string, v interface{}) (err error) {
-	p.contexts[strings.ToUpper(name)] = v
+	p.context[strings.ToUpper(name)] = v
 	return
 }
 
-func (p *HttpJsonApiPayload) Contexts() (contexts spirit.Contexts) {
-	return p.contexts
+func (p *HttpJsonApiPayload) Context() (context spirit.Context) {
+	return p.context
 }
 
 func (p *HttpJsonApiPayload) DeleteContext(name string) (err error) {
-	delete(p.contexts, strings.ToUpper(name))
+	delete(p.context, strings.ToUpper(name))
 	return
 }

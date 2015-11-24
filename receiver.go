@@ -340,45 +340,33 @@ func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit
 			if jsonPayload, ok := apiData.(JsonPayload); ok {
 				payload.id = jsonPayload.Id
 				payload.data = jsonPayload.Data
-				payload.metadata = jsonPayload.Metadata
-				payload.contexts = jsonPayload.Context
-
-				if jsonPayload.Error != nil {
-					errCode := errors.NewErrorCode(
-						jsonPayload.Error.Id,
-						jsonPayload.Error.Code,
-						jsonPayload.Error.Namespace,
-						jsonPayload.Error.Message,
-						jsonPayload.Error.StackTrace,
-						jsonPayload.Error.Context)
-
-					payload.SetError(errCode)
-				}
+				payload.context = jsonPayload.Context
+				payload.errs = jsonPayload.Errors
 			}
 		} else {
 			payload.SetData(apiData)
 
-			headerContexts := map[string]interface{}{}
-			cookiesContexts := map[string]interface{}{}
+			headerContext := map[string]interface{}{}
+			cookiesContext := map[string]interface{}{}
 
 			for _, key := range p.conf.ToContext.Headers {
 				if req.Header.Get(key) != "" {
-					headerContexts[key] = req.Header.Get(key)
+					headerContext[key] = req.Header.Get(key)
 				}
 			}
 
 			for _, key := range p.conf.ToContext.Cookies {
 				if cookie, e := req.Cookie(key); e == nil {
-					cookiesContexts[cookie.Name] = cookie
+					cookiesContext[cookie.Name] = cookie
 				}
 			}
 
-			if len(cookiesContexts) > 0 {
-				payload.SetContext(CtxHttpCookies, cookiesContexts)
+			if len(cookiesContext) > 0 {
+				payload.SetContext(CtxHttpCookies, cookiesContext)
 			}
 
-			if len(headerContexts) > 0 {
-				payload.SetContext(CtxHttpHeaders, headerContexts)
+			if len(headerContext) > 0 {
+				payload.SetContext(CtxHttpHeaders, headerContext)
 			}
 
 			if len(p.conf.ToContext.Customs) > 0 {
@@ -393,17 +381,33 @@ func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit
 			deliveryURN = p.conf.BindURN
 		}
 
-		deliveryLabels := spirit.Labels{}
-		if labels, exist := p.conf.ApiLabels[api]; exist {
-			deliveryLabels = labels
+		labels := spirit.Labels{}
+		if p.conf.DefaultLabels != nil {
+			for k, v := range p.conf.DefaultLabels {
+				labels[k] = v
+			}
+		}
+
+		if apiLabels, exist := p.conf.ApiLabels[api]; exist {
+			for k, v := range apiLabels {
+				labels[k] = v
+			}
+		}
+
+		metadata := spirit.Metadata{}
+		if apiMetadata, exist := p.conf.ApiMetadata[api]; exist {
+			for k, v := range apiMetadata {
+				metadata[k] = v
+			}
 		}
 
 		de := &HttpJsonApiDelivery{
 			id:        xid.New().String(),
 			payload:   payload,
 			urn:       deliveryURN,
-			labels:    deliveryLabels,
+			labels:    labels,
 			timestamp: time.Now(),
+			metadata:  metadata,
 		}
 
 		tmpDeliveries = append(tmpDeliveries, de)
@@ -422,16 +426,20 @@ func (p *JsonApiReceiver) deliveryToApiResponse(delivery spirit.Delivery) (resp 
 	var apiResp APIResponse
 
 	toErrResponseFunc := func(err error) APIResponse {
-		if errCode, ok := delivery.Payload().GetError().(errors.ErrCode); ok {
-			return APIResponse{
-				Code:           errCode.Code(),
-				ErrorId:        errCode.Id(),
-				ErrorNamespace: errCode.Namespace(),
-				Message:        errCode.Error(),
-				Result:         nil,
+
+		switch e := err.(type) {
+		case *spirit.Error:
+			{
+				return APIResponse{
+					Code:           e.Code,
+					ErrorId:        e.Id,
+					ErrorNamespace: e.Namespace,
+					Message:        e.Message,
+					Result:         nil,
+				}
 			}
-		} else {
-			errCode := ErrApiGenericError.New().Append(err)
+		default:
+			errCode := ErrApiGenericError.New().Append(e)
 			return APIResponse{
 				Code:           errCode.Code(),
 				ErrorId:        errCode.Id(),
@@ -442,7 +450,7 @@ func (p *JsonApiReceiver) deliveryToApiResponse(delivery spirit.Delivery) (resp 
 		}
 	}
 
-	if e := delivery.Payload().GetError(); e != nil {
+	if e := delivery.Payload().LastError(); e != nil {
 		apiResp = toErrResponseFunc(e)
 	} else {
 		if data, e := delivery.Payload().GetData(); e != nil {

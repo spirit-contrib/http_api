@@ -74,29 +74,9 @@ func (p *HTTPAPIClient) Call(apiName string, payload spirit.Payload, v interface
 	jsonPayload := JsonPayload{
 		Id:       payload.Id(),
 		Data:     payloadData,
+		Errors:   payload.Errors(),
 		Metadata: payload.Metadata(),
-		Context:  payload.Contexts(),
-	}
-
-	if e := payload.GetError(); e != nil {
-		if errCode, ok := e.(errors.ErrCode); ok {
-			jsonPayload.Error = &ErrorCode{
-				Namespace:  errCode.Namespace(),
-				Code:       errCode.Code(),
-				Id:         errCode.Id(),
-				Message:    errCode.Error(),
-				StackTrace: errCode.StackTrace(),
-				Context:    errCode.Context(),
-			}
-		} else {
-			errCode := ErrUnknownPayloadError.New().Append(e)
-			jsonPayload.Error = &ErrorCode{
-				Namespace: errCode.Namespace(),
-				Code:      errCode.Code(),
-				Id:        errCode.Id(),
-				Message:   errCode.Error(),
-			}
-		}
+		Context:  payload.Context(),
 	}
 
 	var data []byte
