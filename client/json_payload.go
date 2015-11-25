@@ -5,9 +5,8 @@ import (
 )
 
 type JsonPayload struct {
-	Id       string          `json:"id"`
-	Data     interface{}     `json:"data"`
-	Metadata spirit.Metadata `json:"metadata"`
-	Errors   []*spirit.Error `json:"errors"`
-	Context  spirit.Context  `json:"context"`
+	Id      string          `json:"id"`
+	Data    interface{}     `json:"data"`
+	Errors  []*spirit.Error `json:"errors"`
+	Context spirit.Map      `json:"context"`
 }

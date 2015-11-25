@@ -79,10 +79,14 @@ type JsonApiReceiverConfig struct {
 
 	HeaderDefines HeaderDefines `json:"header_defines"`
 
-	ApiURN        map[string]string          `json:"api_urn"`
-	ApiLabels     map[string]spirit.Labels   `json:"api_labels"`
-	ApiMetadata   map[string]spirit.Metadata `json:"api_metadata"`
-	DefaultLabels spirit.Labels              `json:"default_labels"`
+	BindURN string            `json:"bind_urn"`
+	ApiURN  map[string]string `json:"api_urn"`
+
+	DefaultLabels spirit.Labels            `json:"default_labels"`
+	ApiLabels     map[string]spirit.Labels `json:"api_labels"`
+
+	DefaultMetadata map[string]interface{}            `json:"default_metadata"`
+	ApiMetadata     map[string]map[string]interface{} `json:"api_metadata"`
 
 	Renderer RendererConfig `json:"renderer"`
 
@@ -92,7 +96,6 @@ type JsonApiReceiverConfig struct {
 
 	Path    string `json:"path"`
 	Timeout int    `json:"timeout"`
-	BindURN string `json:"bind_urn"`
 
 	ToContext ToContext `json:"to_context"`
 

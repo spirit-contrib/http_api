@@ -72,11 +72,10 @@ func (p *HTTPAPIClient) Call(apiName string, payload spirit.Payload, v interface
 	}
 
 	jsonPayload := JsonPayload{
-		Id:       payload.Id(),
-		Data:     payloadData,
-		Errors:   payload.Errors(),
-		Metadata: payload.Metadata(),
-		Context:  payload.Context(),
+		Id:      payload.Id(),
+		Data:    payloadData,
+		Errors:  payload.Errors(),
+		Context: payload.Context(),
 	}
 
 	var data []byte

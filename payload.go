@@ -16,20 +16,20 @@ type JsonPayload struct {
 	Id      string          `json:"id"`
 	Data    interface{}     `json:"data"`
 	Errors  []*spirit.Error `json:"errors"`
-	Context spirit.Context  `json:"context"`
+	Context spirit.Map      `json:"context"`
 }
 
 type HttpJsonApiPayload struct {
 	id      string
 	data    interface{}
 	errs    []*spirit.Error
-	context spirit.Context
+	context spirit.Map
 }
 
 func NewHttpJsonApiPayload() (payload *HttpJsonApiPayload) {
 	payload = &HttpJsonApiPayload{
 		id:      xid.New().String(),
-		context: make(spirit.Context),
+		context: make(spirit.Map),
 	}
 
 	return
@@ -122,7 +122,7 @@ func (p *HttpJsonApiPayload) SetContext(name string, v interface{}) (err error) 
 	return
 }
 
-func (p *HttpJsonApiPayload) Context() (context spirit.Context) {
+func (p *HttpJsonApiPayload) Context() (context spirit.Map) {
 	return p.context
 }
 

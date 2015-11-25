@@ -37,7 +37,7 @@ func init() {
 	spirit.RegisterReceiver(receiverURN, NewJsonApiReceiver)
 }
 
-func NewJsonApiReceiver(config spirit.Config) (receiver spirit.Receiver, err error) {
+func NewJsonApiReceiver(config spirit.Map) (receiver spirit.Receiver, err error) {
 	conf := JsonApiReceiverConfig{}
 
 	if err = config.ToObject(&conf); err != nil {
@@ -394,7 +394,14 @@ func (p *JsonApiReceiver) toDeliveries(req *gohttp.Request) (deliveries []spirit
 			}
 		}
 
-		metadata := spirit.Metadata{}
+		metadata := map[string]interface{}{}
+
+		if p.conf.DefaultMetadata != nil {
+			for k, v := range p.conf.DefaultMetadata {
+				metadata[k] = v
+			}
+		}
+
 		if apiMetadata, exist := p.conf.ApiMetadata[api]; exist {
 			for k, v := range apiMetadata {
 				metadata[k] = v
