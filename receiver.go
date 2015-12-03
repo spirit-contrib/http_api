@@ -20,9 +20,10 @@ var (
 )
 
 type JsonApiReceiver struct {
-	*http.HTTPReceiver
-
+	name string
 	conf JsonApiReceiverConfig
+
+	*http.HTTPReceiver
 
 	responseRenderer *APIResponseRenderer
 
@@ -31,22 +32,24 @@ type JsonApiReceiver struct {
 
 var (
 	_ spirit.Receiver = new(JsonApiReceiver)
+	_ spirit.Actor    = new(JsonApiReceiver)
 )
 
 func init() {
 	spirit.RegisterReceiver(receiverURN, NewJsonApiReceiver)
 }
 
-func NewJsonApiReceiver(config spirit.Map) (receiver spirit.Receiver, err error) {
+func NewJsonApiReceiver(name string, options spirit.Map) (receiver spirit.Receiver, err error) {
 	conf := JsonApiReceiverConfig{}
 
-	if err = config.ToObject(&conf); err != nil {
+	if err = options.ToObject(&conf); err != nil {
 		return
 	}
 
 	conf.initial()
 
 	jsonApiReceiver := &JsonApiReceiver{
+		name: name,
 		conf: conf,
 	}
 
@@ -109,6 +112,14 @@ func NewJsonApiReceiver(config spirit.Map) (receiver spirit.Receiver, err error)
 
 	receiver = jsonApiReceiver
 	return
+}
+
+func (p *JsonApiReceiver) Name() string {
+	return p.name
+}
+
+func (p *JsonApiReceiver) URN() string {
+	return receiverURN
 }
 
 func (p *JsonApiReceiver) optionHandle(w gohttp.ResponseWriter, r *gohttp.Request) {
