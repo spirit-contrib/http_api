@@ -32,7 +32,6 @@ type JsonApiReceiver struct {
 
 var (
 	_ spirit.Receiver = new(JsonApiReceiver)
-	_ spirit.Actor    = new(JsonApiReceiver)
 )
 
 func init() {
@@ -167,7 +166,11 @@ func (p *JsonApiReceiver) requestHandler(
 		}
 
 		if data, e := json.Marshal(apiResponse); e != nil {
-			spirit.Logger().WithField("event", "to deliveries").Println(err)
+			spirit.Logger().
+				WithField("event", "to deliveries").
+				WithField("urn", p.URN()).
+				WithField("name", p.Name()).
+				Errorln(err)
 		} else {
 			p.writeResponse(data, res, req)
 		}
@@ -219,6 +222,8 @@ func (p *JsonApiReceiver) requestHandler(
 				{
 					if api, exist := apiIds[delivery.Id()]; !exist {
 						spirit.Logger().
+							WithField("urn", p.URN()).
+							WithField("name", p.Name()).
 							WithField("api", api).
 							WithField("delivery_id", delivery.Id()).
 							Errorln("api not exist in request while delivery response")
